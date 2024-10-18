@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/todo")
@@ -72,7 +73,7 @@ public class TodoController {
 
     // read todo
     @GetMapping
-    public ResponseEntity<?> retrieveTodoList(@AuthenticationPrincipal String userId){
+    public ResponseEntity<?> retrieveTodoList(@AuthenticationPrincipal String userId) {
         // 임시 유저 하드코딩
 //        String temporaryUserId = "temporary-user";
 
@@ -81,7 +82,7 @@ public class TodoController {
 
         // (2) 리턴된 엔티티리스트를 todoDTO 리스트로 변환
         List<TodoDTO> todoDTOS = new ArrayList<>();
-        for (TodoEntity entity:todoEntities){
+        for (TodoEntity entity : todoEntities) {
             TodoDTO dto = new TodoDTO(entity);
             todoDTOS.add(dto);
         }
@@ -91,5 +92,37 @@ public class TodoController {
 
         // (4) ResponseDTO 리턴
         return ResponseEntity.ok().body(response);
+    }
+
+    // update todo
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTodo(@AuthenticationPrincipal String userId, TodoDTO dto, @PathVariable Long id) {
+        try {
+
+            TodoEntity entity = TodoDTO.toEntity(dto);
+
+            Optional<TodoEntity> existingTodo = todoService.getTodo(id);
+
+            // 작성자가 작성한 todo 만 수정 가능하도록
+            if (!existingTodo.get().getUserId().equals(userId)) {
+                return ResponseEntity.badRequest().body(ResponseDTO.<TodoDTO>builder().error("You are not allowed to update this Todo.").build());
+            }
+
+            List<TodoEntity> todoEntity = todoService.update(entity);
+
+            List<TodoDTO> todoDTOS = new ArrayList<>();
+            for (TodoEntity todo : todoEntity) {
+                TodoDTO todoDTO = new TodoDTO(todo);
+                todoDTOS.add(todoDTO);
+            }
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(todoDTOS).build();
+
+            return ResponseEntity.ok().body(response);
+        } catch (Exception e) {
+            String error = e.getMessage();
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().error(error).build();
+
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }

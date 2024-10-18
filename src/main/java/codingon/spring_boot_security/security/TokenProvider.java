@@ -2,11 +2,13 @@ package codingon.spring_boot_security.security;
 
 // security 패키지는 인증/인가에 관련된 클래스 모음
 
+import codingon.spring_boot_security.config.jwt.JwtProperties;
 import codingon.spring_boot_security.entity.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,7 +19,11 @@ import java.util.Date;
 @Slf4j
 @Service
 public class TokenProvider {
-    private final String SECRET_KEY = "sesac-springboot-435122";
+//    private final String SECRET_KEY = "sesac-springboot-435122";
+
+    // [after] JwtProperties 클래스 이용해 설정 파일 값 꺼내오기
+    @Autowired
+    private JwtProperties jwtProperties;
 
     // create() : JWT 생성
     public String create(UserEntity entity){
@@ -27,10 +33,10 @@ public class TokenProvider {
         // JWT 토큰 생성
         return Jwts.builder()
                 // header(token 구성요소 중 하나) 에 들어갈 내용 및 서명을 하기 위한 설정
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS512, jwtProperties.getSecretkey())
                 // payload 에 들어갈 내용
                 .setSubject(String.valueOf(entity.getId())) // 토큰 제목
-                .setIssuer("demo app") // iss: 토큰 발급자
+                .setIssuer(jwtProperties.getIssuer()) // iss: 토큰 발급자
                 .setIssuedAt(new Date()) // iat: 토큰이 발급된 시간
                 .setExpiration(expiryDate) // exp: 토큰 만료 시간
                 // 토큰 생성
@@ -46,7 +52,7 @@ public class TokenProvider {
         // - 두개의 값이 불일치한다면 (위조된거니) 예외 날림
         // - 우리는 결국 userId 가 필요함느로 getBody 를 부름
         Claims claims = Jwts.parser() // 파서 생성
-                .setSigningKey(SECRET_KEY) // 서명 검증을 위해 비밀키 입력
+                .setSigningKey(jwtProperties.getSecretkey()) // 서명 검증을 위해 비밀키 입력
                 .parseClaimsJws(token) // 토큰을 파싱하고 서명 검증 -> 토큰 위조 예외 발생
                 .getBody(); // 검증된 토큰의 본문(claims)을 가져옴
 

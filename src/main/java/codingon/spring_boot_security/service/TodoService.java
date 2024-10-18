@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 // simple logging facade for java
 // - 로그 라이브러리
@@ -31,6 +32,18 @@ public class TodoService {
     // read todo
     public List<TodoEntity> retrieve(final String userId){
         return todoRepository.findByUserId(userId);
+    }
+
+    // update todo
+    public List<TodoEntity> update(final TodoEntity entity){
+
+        todoRepository.save(entity);
+        return todoRepository.findByUserId(entity.getUserId());
+    }
+
+    // todo 단건 조회
+    public Optional<TodoEntity> getTodo(Long id){
+        return todoRepository.findById(id);
     }
 
     // 유효성 검사
