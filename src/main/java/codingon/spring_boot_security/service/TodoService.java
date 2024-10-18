@@ -28,6 +28,11 @@ public class TodoService {
         return todoRepository.findByUserId(entity.getUserId());   // db select 수행(추가한 그 행을 바로 리턴)
     }
 
+    // read todo
+    public List<TodoEntity> retrieve(final String userId){
+        return todoRepository.findByUserId(userId);
+    }
+
     // 유효성 검사
     private void validate(final TodoEntity entity){
         if (entity == null){
